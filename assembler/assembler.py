@@ -8,13 +8,13 @@ from assembler.isa import *
 from assembler.state import *
 from assembler.exceptions import AssemblerWarning, AssemblerError
 
-from assembler.preprocessor import Preprocessor
+from assembler.preprocessor import preprocessor
 from assembler.synthesis import Synthesizer
 
 
 class Assembler(object):
     
-    def __init__(self, preprocessor: Preprocessor, synthesizer: Synthesizer):
+    def __init__(self, preprocessor: preprocessor, synthesizer: Synthesizer):
         self.__preprocessor = preprocessor
         self.__synthesizer = synthesizer
 

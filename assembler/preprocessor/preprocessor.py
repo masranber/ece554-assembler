@@ -1,5 +1,5 @@
 from typing import List
-from .PreprocessorTask import PreprocessorTask
+from .preprocessor_task import PreprocessorTask
 from assembler.state import AssemblerPassState
 
 class Preprocessor(object):

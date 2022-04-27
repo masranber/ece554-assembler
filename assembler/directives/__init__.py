@@ -1,2 +1,2 @@
-from .directive import *
-from .MemorySegmentDirective import *
+from .directive_processor import *
+from .directive_processors import *

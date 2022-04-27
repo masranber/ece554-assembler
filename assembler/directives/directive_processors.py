@@ -1,9 +1,12 @@
 from assembler.memory import MemorySegment
-from .directive import AssemblerDirective
+from .directive_processor import DirectiveProcessor
 from assembler.state import AssemblerPassState
 from assembler.exceptions import AssemblerError
 
-class MemorySegmentDirective(AssemblerDirective):
+
+# Segment directives
+
+class SegmentDirectiveProcessor(DirectiveProcessor):
 
     def process(self, value: str, aps: AssemblerPassState):
         if not value: raise AssemblerError('Expected memory segment after directive token \'.segment\'.', aps.filename, aps.lineno, None, None)

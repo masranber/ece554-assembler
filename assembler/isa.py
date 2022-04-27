@@ -23,7 +23,7 @@ class AssembledBitString(NamedTuple):
     bitstring: Bits
     warnings: List[AssemblerWarning]
 
-class Operand(object):
+class OperandProcessor(object):
 
     def __init__(self, length: int):
         self.length = length
@@ -36,7 +36,7 @@ class Operand(object):
     def process_symbol(self, opd_bits: Bits) -> AssembledBitString:
         pass
 
-class ImplicitOperand(Operand):
+class ImplicitOperandProcessor(OperandProcessor):
 
     def __init__(self, value: Bits):
         super().__init__(len(value))
@@ -60,7 +60,7 @@ class ImplicitOperand(Operand):
             raise AssemblerError('Unexpected operand.')
         return (self.__value, None)
 
-class RegisterOperand(Operand):
+class RegisterOperandProcessor(OperandProcessor):
 
     def __init__(self, length: int, registers: RegisterTable):
         super().__init__(length)
@@ -90,7 +90,7 @@ class RegisterOperand(Operand):
             raise AssemblerError('Invalid symbol \'{}\' for type CPU register of length {} bits.'.format(opd_bits.uint, self.length))
     
 
-class ImmediateOperand(Operand):
+class ImmediateOperandProcessor(OperandProcessor):
     
     def __init__(self, length: int, is_signed: bool = True):
         super().__init__(length)
@@ -131,13 +131,13 @@ class ImmediateOperand(Operand):
             raise AssemblerError(e)
 
 
-class Instruction(object):
+class InstructionProcessor(object):
 
     OPERAND_DELIM = ','
     
-    def __init__(self, opcode: Opcode, **kwargs: Operand):
+    def __init__(self, opcode: Opcode, **kwargs: OperandProcessor):
         self.__opcode = opcode
-        self.__operands = kwargs
+        self.__operandProcessors = kwargs
 
     def process_str(self, opds_str: str, aps: AssemblerPassState) -> AssembledBitString:
         bitstring = BitString(self.__opcode.bitstring)
@@ -145,29 +145,29 @@ class Instruction(object):
 
         if opds_str is None: raise ValueError('opds_str cannot be None.')
 
-        if not opds_str and len(self.__operands) == 0:
+        if not opds_str and len(self.__operandProcessors) == 0:
             return (bitstring, warnings)
 
-        opd_strs = opds_str.split(Instruction.OPERAND_DELIM)
+        opd_strs = opds_str.split(InstructionProcessor.OPERAND_DELIM)
 
-        if len(opd_strs) > len(self.__operands):
-            bad_index = len(self.__operands)
-            raise AssemblerError('Unexpected operand \'{}\' at position {} for instruction of type \'{}\'. Expected {} operands, but {} were provided.'.format(opd_strs[bad_index], bad_index, self.__opcode.name, len(self.__operands), len(opd_strs)), at_token=opds_str)
+        if len(opd_strs) > len(self.__operandProcessors):
+            bad_index = len(self.__operandProcessors)
+            raise AssemblerError('Unexpected operand \'{}\' at position {} for instruction of type \'{}\'. Expected {} operands, but {} were provided.'.format(opd_strs[bad_index], bad_index, self.__opcode.name, len(self.__operandProcessors), len(opd_strs)), at_token=opds_str)
 
         i: int = 0
         opd_name: str
-        opd: Operand
-        for i, (opd_name, opd) in enumerate(self.__operands.items()):
-            if type(opd) == ImplicitOperand:
-                opd_strs.insert(i, '')
+        opd_proc: OperandProcessor
+        for i, (opd_name, opd_proc) in enumerate(self.__operandProcessors.items()):
+            if type(opd_proc) == ImplicitOperandProcessor:
+                opd_strs.insert(i, '') # create implicit (empty) operand string
             try:
                 opd_str = opd_strs[i].strip()
                 opd_bitstring = None
                 opd_warnings = None
                 try:
-                    opd_bitstring, opd_warnings = opd.process_symbol(aps.get_symbol(opd_str))
+                    opd_bitstring, opd_warnings = opd_proc.process_symbol(aps.get_symbol(opd_str))
                 except KeyError:
-                    opd_bitstring, opd_warnings = opd.process_str(opd_str)
+                    opd_bitstring, opd_warnings = opd_proc.process_str(opd_str)
                 except AssemblerError as e:
                     if not e.at_token: e.at_token = opd_str
                     raise e
@@ -176,10 +176,10 @@ class Instruction(object):
                 warnings.append(opd_warnings)
                 
             except IndexError:
-                raise AssemblerError('Expected operand \'{}\' at position {} for instruction of type \'{}\'. Expected {} operands, only {} were provided.'.format(opd_name, i, self.__opcode.name, len(self.__operands), len(opd_strs)), at_token=opds_str)
+                raise AssemblerError('Expected operand \'{}\' at position {} for instruction of type \'{}\'. Expected {} operands, only {} were provided.'.format(opd_name, i, self.__opcode.name, len(self.__operandProcessors), len(opd_strs)), at_token=opds_str)
 
         return (bitstring, warnings)
 
 
 # Type Aliases (equiv to typedef in C++)
-InstructionSet = Dict[str, Instruction] # Maps opcodes to instruction definitions
+InstructionSet = Dict[str, InstructionProcessor] # Maps opcodes to instruction definitions

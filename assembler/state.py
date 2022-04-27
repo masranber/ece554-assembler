@@ -11,7 +11,7 @@ class AssemblerPassState(object):
         self.filename: str = None
         self.lineno: int = 0
         self.pc_addr: int = 0
-        self.segment: MemorySegment = MemorySegment.NONE
+        self.segment: MemorySegment = MemorySegment.TEXT # Assume text (code) segment if none defined in source file
         self.__sym_table = {}
 
     def add_symbol(self, name: str, value: Bits):

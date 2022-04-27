@@ -1,4 +1,4 @@
-from assembler.isa import InstructionSet, Instruction, AssembledBitString
+from assembler.isa import InstructionSet, InstructionProcessor, AssembledBitString
 from assembler.state import AssemblerPassState
 
 from assembler.exceptions import AssemblerWarning, AssemblerError
@@ -15,8 +15,8 @@ class Synthesizer(object):
         if not instr_str: return AssembledBitString(None, None)
         try:
             opc_str, *opds_str = instr_str.split(' ', maxsplit=1)
-            instr: Instruction = self.__instr_set[opc_str]
-            return instr.process_str(opds_str[0] if opds_str else '', aps)
+            instr_proc: InstructionProcessor = self.__instr_set[opc_str]
+            return instr_proc.process_str(opds_str[0] if opds_str else '', aps)
         except KeyError:
             raise AssemblerError('Failed to resolve instruction \'{}\'. Bad opcode or bad instruction format'.format(opc_str), aps.filename, aps.lineno, line, at_token=opc_str)
         except ValueError:

@@ -1,1 +1,1 @@
-from .Synthesizer import *
+from .synthesizer import *

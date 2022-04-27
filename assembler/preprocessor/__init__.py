@@ -1,7 +1,4 @@
-from .Preprocessor import *
+from .preprocessor import *
 
-from .PreprocessorTask import *
-from .StripCommentsTask import *
-from .StripWhitespaceTask import *
-from .DirectiveTask import *
-from .AddressingTask import *
+from .preprocessor_task import *
+from .preprocessor_tasks import *

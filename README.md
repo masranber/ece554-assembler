@@ -1,4 +1,8 @@
-# ECE 554 Assembler
+# ECE554 (Digital Engineering Laboratory) Assembler
+
+Mason Berres, Moubarak Jeje, Anna Iwanski, Andrew Janssen, Braydon Friar, Charles Stock
+
+This is our assembler used to compile assembly programs for our audio processor.
 
 ## Installation
 

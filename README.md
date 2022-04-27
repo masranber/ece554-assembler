@@ -1,4 +1,4 @@
-# ECE554 (Digital Engineering Laboratory) Assembler
+# ECE554 Assembler
 
 Mason Berres, Moubarak Jeje, Anna Iwanski, Andrew Janssen, Braydon Friar, Charles Stock
 

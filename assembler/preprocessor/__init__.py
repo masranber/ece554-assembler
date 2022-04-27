@@ -1,4 +1,4 @@
-from .preprocessor import *
+from .Preprocessor import *
 
 from .PreprocessorTask import *
 from .StripCommentsTask import *

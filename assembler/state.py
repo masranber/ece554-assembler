@@ -1,7 +1,7 @@
 from typing import Dict
 from bitstring import Bits
 
-from assembler.MemorySegment import MemorySegment
+from assembler.memory import MemorySegment
 
 SymbolTable = Dict[str, Bits]
 

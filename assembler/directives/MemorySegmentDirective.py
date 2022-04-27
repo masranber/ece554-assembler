@@ -1,5 +1,5 @@
-from assembler.MemorySegment import MemorySegment
-from assembler.directives.directive import AssemblerDirective
+from assembler.memory import MemorySegment
+from .directive import AssemblerDirective
 from assembler.state import AssemblerPassState
 from assembler.exceptions import AssemblerError
 

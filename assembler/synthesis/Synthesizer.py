@@ -15,7 +15,7 @@ class Synthesizer(object):
         if not instr_str: return AssembledBitString(None, None)
         try:
             opc_str, *opds_str = instr_str.split(' ', maxsplit=1)
-            instr_proc: InstructionProcessor = self.__instr_set[opc_str]
+            instr_proc: InstructionProcessor = self.__instr_set[opc_str.upper()]
             return instr_proc.process_str(opds_str[0] if opds_str else '', aps)
         except KeyError:
             raise AssemblerError('Failed to resolve instruction \'{}\'. Bad opcode or bad instruction format'.format(opc_str), aps.filename, aps.lineno, line, at_token=opc_str)

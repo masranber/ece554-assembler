@@ -36,16 +36,17 @@ INSTR_OPD_LEN_ALU_OP   = 2
 FILE_EXT_ASSEMBLY    = 'asm'
 
 CPU_GP_REGISTERS: RegisterTable = {
-    'R0' : Register('R0', Bits(uint=0, length=INSTR_OPD_LEN_GP_REG)),
-    'R1' : Register('R1', Bits(uint=1, length=INSTR_OPD_LEN_GP_REG)),
-    'R2' : Register('R2', Bits(uint=2, length=INSTR_OPD_LEN_GP_REG)),
-    'R3' : Register('R3', Bits(uint=3, length=INSTR_OPD_LEN_GP_REG)),
-    'R4' : Register('R4', Bits(uint=4, length=INSTR_OPD_LEN_GP_REG)),
-    'R5' : Register('R5', Bits(uint=5, length=INSTR_OPD_LEN_GP_REG)),
-    'R6' : Register('R6', Bits(uint=6, length=INSTR_OPD_LEN_GP_REG)),
-    'R7' : Register('R7', Bits(uint=7, length=INSTR_OPD_LEN_GP_REG)),
+    '0' : Register('0', Bits(uint=0, length=INSTR_OPD_LEN_GP_REG)),
+    '1' : Register('1', Bits(uint=1, length=INSTR_OPD_LEN_GP_REG)),
+    '2' : Register('2', Bits(uint=2, length=INSTR_OPD_LEN_GP_REG)),
+    '3' : Register('3', Bits(uint=3, length=INSTR_OPD_LEN_GP_REG)),
+    '4' : Register('4', Bits(uint=4, length=INSTR_OPD_LEN_GP_REG)),
+    '5' : Register('5', Bits(uint=5, length=INSTR_OPD_LEN_GP_REG)),
+    '6' : Register('6', Bits(uint=6, length=INSTR_OPD_LEN_GP_REG)),
+    '7' : Register('7', Bits(uint=7, length=INSTR_OPD_LEN_GP_REG)),
 }
 
+''' VDOT registers don't need special names anymore
 VDOT_REGISTERS: RegisterTable = {
     'V0' : Register('V0', Bits(uint=0, length=INSTR_OPD_LEN_VDOT_REG)),
     'V1' : Register('V1', Bits(uint=1, length=INSTR_OPD_LEN_VDOT_REG)),
@@ -56,6 +57,7 @@ VDOT_REGISTERS: RegisterTable = {
     'V6' : Register('V6', Bits(uint=6, length=INSTR_OPD_LEN_VDOT_REG)),
     'V7' : Register('V7', Bits(uint=7, length=INSTR_OPD_LEN_VDOT_REG)),
 }
+'''
 
 
 class Opcodes(Enum):
@@ -63,13 +65,11 @@ class Opcodes(Enum):
     NOP  = Opcode('NOP' , Bits(uint=1 , length=INSTR_OPC_LEN))
     ADDI = Opcode('ADDI', Bits(uint=8 , length=INSTR_OPC_LEN))
     SUBI = Opcode('SUBI', Bits(uint=9 , length=INSTR_OPC_LEN))
-    STT  = Opcode('STT' , Bits(uint=16, length=INSTR_OPC_LEN))
-    STS  = Opcode('STS' , Bits(uint=29, length=INSTR_OPC_LEN))
-    LDO  = Opcode('LDO' , Bits(uint=17, length=INSTR_OPC_LEN))
-    LDS  = Opcode('LDS' , Bits(uint=18, length=INSTR_OPC_LEN))
-    VLD  = Opcode('VLD' , Bits(uint=30, length=INSTR_OPC_LEN))
+    ST   = Opcode('ST'  , Bits(uint=16, length=INSTR_OPC_LEN))
+    LD   = Opcode('LD'  , Bits(uint=17, length=INSTR_OPC_LEN))
+    VLD  = Opcode('VLD' , Bits(uint=2 , length=INSTR_OPC_LEN))
+    VDOT = Opcode('VDOT', Bits(uint=3 , length=INSTR_OPC_LEN))
     STU  = Opcode('STU' , Bits(uint=19, length=INSTR_OPC_LEN))
-    VDOT = Opcode('VDOT', Bits(uint=31, length=INSTR_OPC_LEN))
     ADD  = Opcode('ADD' , Bits(uint=25, length=INSTR_OPC_LEN))
     SUB  = Opcode('SUB' , Bits(uint=25, length=INSTR_OPC_LEN))
     SEQ  = Opcode('SEQ' , Bits(uint=28, length=INSTR_OPC_LEN))
@@ -84,7 +84,7 @@ class Opcodes(Enum):
 
 class OperandProcessorDefs:
     REG_GP         = RegisterOperandProcessor(INSTR_OPD_LEN_GP_REG   , registers=CPU_GP_REGISTERS) # General-purpose (GP) CPU register
-    REG_VDOT       = RegisterOperandProcessor(INSTR_OPD_LEN_VDOT_REG , registers=VDOT_REGISTERS)   # Vector dot product (VDOT) CPU register
+    #REG_VDOT       = RegisterOperandProcessor(INSTR_OPD_LEN_VDOT_REG , registers=VDOT_REGISTERS)   # Vector dot product (VDOT) CPU register
     IMM_BOOL       = ImmediateOperandProcessor(INSTR_OPD_LEN_IMM_BOOL, is_signed=False)            # 1-bit unsigned (boolean) immediate
     IMM3_UNSIGNED  = ImmediateOperandProcessor(INSTR_OPD_LEN_IMM3    , is_signed=False)            # 3-bit unsigned immediate
     IMM3_SIGNED    = ImmediateOperandProcessor(INSTR_OPD_LEN_IMM3    , is_signed=True )            # 3-bit signed immediate
@@ -105,13 +105,11 @@ INSTRUCTION_SET: InstructionSet = {
     Opcodes.NOP.name  : InstructionProcessor(Opcodes.NOP.value , pad = OperandProcessorDefs.ZERO_PADDING),
     Opcodes.ADDI.name : InstructionProcessor(Opcodes.ADDI.value, Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM5_SIGNED),
     Opcodes.SUBI.name : InstructionProcessor(Opcodes.SUBI.value, Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM5_SIGNED),
-    Opcodes.STT.name  : InstructionProcessor(Opcodes.STT.value , Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM5_SIGNED),
-    Opcodes.STS.name  : InstructionProcessor(Opcodes.STS.value , Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM5_SIGNED),
-    Opcodes.STU.name  : InstructionProcessor(Opcodes.STU.value , Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM5_SIGNED),
-    Opcodes.LDO.name  : InstructionProcessor(Opcodes.LDO.value , Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM5_SIGNED),
-    Opcodes.LDS.name  : InstructionProcessor(Opcodes.LDS.value , Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM5_SIGNED),
+    Opcodes.ST.name   : InstructionProcessor(Opcodes.ST.value  , Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM5_SIGNED),
+    Opcodes.LD.name   : InstructionProcessor(Opcodes.LD.value  , Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM5_SIGNED),
     Opcodes.VLD.name  : InstructionProcessor(Opcodes.VLD.value , Rd = OperandProcessorDefs.REG_VDOT, Rs = OperandProcessorDefs.REG_VDOT, immediate = OperandProcessorDefs.IMM5_SIGNED),
     Opcodes.VDOT.name : InstructionProcessor(Opcodes.VDOT.value, Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, ac = OperandProcessorDefs.IMM_BOOL, pad = ImplicitOperandProcessor.ZEROS(4)),
+    Opcodes.STU.name  : InstructionProcessor(Opcodes.STU.value , Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM5_SIGNED),
     Opcodes.ADD.name  : InstructionProcessor(Opcodes.ADD.value , Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, Rt = OperandProcessorDefs.REG_GP, alu_op=OperandProcessorDefs.ALU_OPC_ADD),
     Opcodes.SUB.name  : InstructionProcessor(Opcodes.SUB.value , Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, Rt = OperandProcessorDefs.REG_GP, alu_op=OperandProcessorDefs.ALU_OPC_SUB),
     Opcodes.SEQ.name  : InstructionProcessor(Opcodes.SEQ.value , Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, Rt = OperandProcessorDefs.REG_GP, alu_op=OperandProcessorDefs.ALU_OPC_XX),

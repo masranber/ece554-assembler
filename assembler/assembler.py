@@ -51,6 +51,7 @@ class Assembler(object):
                 text_segment.append(b)
                 print('{} -> {} (0x{})'.format(instr, b.bin, b.hex))
 
+        #text_segment.byteswap(2) # change endianness of the machine code
         return text_segment
         
 

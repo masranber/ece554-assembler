@@ -1,4 +1,7 @@
 from bitstring import Bits
+from assembler.exceptions import AssemblerException
+
+from assembler.state import AssemblerPassState
 
 def resize_bits(bits: Bits, length: int, is_signed: bool = False, except_on_overflow: bool = True) -> Bits:
     if(bits.length > length):
@@ -14,3 +17,9 @@ def resize_bits(bits: Bits, length: int, is_signed: bool = False, except_on_over
         return Bits(bin=(ext + bits.bin))
     else:
         return bits # no resize needed
+
+def print_info(aps: AssemblerPassState, msg: str):
+    print('{}:{}: INFO: {}'.format(aps.filename, aps.lineno, msg))
+
+def print_exception(exception: AssemblerException):
+    print(exception.tostring())

@@ -73,8 +73,12 @@ class Opcodes(Enum):
     ADD  = Opcode('ADD' , Bits(uint=25, length=INSTR_OPC_LEN))
     SUB  = Opcode('SUB' , Bits(uint=25, length=INSTR_OPC_LEN))
     SEQ  = Opcode('SEQ' , Bits(uint=28, length=INSTR_OPC_LEN))
+    SLT  = Opcode('SLT' , Bits(uint=29, length=INSTR_OPC_LEN))
+    SLE  = Opcode('SLE' , Bits(uint=30, length=INSTR_OPC_LEN))
+    SCO  = Opcode('SCO' , Bits(uint=31, length=INSTR_OPC_LEN))
     BEQZ = Opcode('BEQZ', Bits(uint=12, length=INSTR_OPC_LEN))
     BLTZ = Opcode('BLTZ', Bits(uint=14, length=INSTR_OPC_LEN))
+    BGEZ = Opcode('BGEZ', Bits(uint=15, length=INSTR_OPC_LEN))
     LBI  = Opcode('LBI' , Bits(uint=24, length=INSTR_OPC_LEN))
     SLBI = Opcode('SLBI', Bits(uint=18, length=INSTR_OPC_LEN))
     J    = Opcode('J'   , Bits(uint=4 , length=INSTR_OPC_LEN))
@@ -91,9 +95,9 @@ class OperandProcessorDefs:
     IMM5_UNSIGNED  = ImmediateOperandProcessor(INSTR_OPD_LEN_IMM5    , is_signed=False)            # 5-bit unsigned immediate
     IMM5_SIGNED    = ImmediateOperandProcessor(INSTR_OPD_LEN_IMM5    , is_signed=True )            # 5-bit signed immediate
     IMM8_UNSIGNED  = ImmediateOperandProcessor(INSTR_OPD_LEN_IMM8    , is_signed=False)            # 8-bit unsigned immediate
-    IMM8_SIGNED    = ImmediateOperandProcessor(INSTR_OPD_LEN_IMM8    , is_signed=True )            # 8-bit signed immediate
+    DISP8_SIGNED   = DisplacementOperandProcessor(INSTR_OPD_LEN_IMM8 , is_signed=True )            # 8-bit signed displacement
     IMM11_UNSIGNED = ImmediateOperandProcessor(INSTR_OPD_LEN_IMM11   , is_signed=False)            # 11-bit unsigned immediate
-    IMM11_SIGNED   = ImmediateOperandProcessor(INSTR_OPD_LEN_IMM11   , is_signed=True )            # 11-bit signed immediate
+    DISP11_SIGNED  = DisplacementOperandProcessor(INSTR_OPD_LEN_IMM11, is_signed=True )            # 11-bit signed displacement
     ZERO_PADDING   = ImplicitOperandProcessor.ZEROS(INSTR_LEN - INSTR_OPC_LEN)                     # Padding operand (all 0's)
     ALU_OPC_ADD    = ImplicitOperandProcessor(Bits(uint=0, length=INSTR_OPD_LEN_ALU_OP))           # ALU opcode for addition instruction
     ALU_OPC_SUB    = ImplicitOperandProcessor(Bits(uint=1, length=INSTR_OPD_LEN_ALU_OP))           # ALU opcode for subtraction instruction
@@ -107,19 +111,23 @@ INSTRUCTION_SET: InstructionSet = {
     Opcodes.SUBI.name : InstructionProcessor(Opcodes.SUBI.value, Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM5_SIGNED),
     Opcodes.ST.name   : InstructionProcessor(Opcodes.ST.value  , Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM5_SIGNED),
     Opcodes.LD.name   : InstructionProcessor(Opcodes.LD.value  , Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM5_SIGNED),
-    Opcodes.VLD.name  : InstructionProcessor(Opcodes.VLD.value , Rd = OperandProcessorDefs.REG_VDOT, Rs = OperandProcessorDefs.REG_VDOT, immediate = OperandProcessorDefs.IMM5_SIGNED),
+    Opcodes.VLD.name  : InstructionProcessor(Opcodes.VLD.value , Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM5_SIGNED),
     Opcodes.VDOT.name : InstructionProcessor(Opcodes.VDOT.value, Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, ac = OperandProcessorDefs.IMM_BOOL, pad = ImplicitOperandProcessor.ZEROS(4)),
     Opcodes.STU.name  : InstructionProcessor(Opcodes.STU.value , Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM5_SIGNED),
     Opcodes.ADD.name  : InstructionProcessor(Opcodes.ADD.value , Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, Rt = OperandProcessorDefs.REG_GP, alu_op=OperandProcessorDefs.ALU_OPC_ADD),
     Opcodes.SUB.name  : InstructionProcessor(Opcodes.SUB.value , Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, Rt = OperandProcessorDefs.REG_GP, alu_op=OperandProcessorDefs.ALU_OPC_SUB),
     Opcodes.SEQ.name  : InstructionProcessor(Opcodes.SEQ.value , Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, Rt = OperandProcessorDefs.REG_GP, alu_op=OperandProcessorDefs.ALU_OPC_XX),
-    Opcodes.BEQZ.name : InstructionProcessor(Opcodes.BEQZ.value, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM8_SIGNED),
-    Opcodes.BLTZ.name : InstructionProcessor(Opcodes.BLTZ.value, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM8_SIGNED),
-    Opcodes.LBI.name  : InstructionProcessor(Opcodes.LBI.value , Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM8_SIGNED),
+    Opcodes.SLT.name  : InstructionProcessor(Opcodes.SLT.value , Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, Rt = OperandProcessorDefs.REG_GP, alu_op=OperandProcessorDefs.ALU_OPC_XX),
+    Opcodes.SLE.name  : InstructionProcessor(Opcodes.SLE.value , Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, Rt = OperandProcessorDefs.REG_GP, alu_op=OperandProcessorDefs.ALU_OPC_XX),
+    Opcodes.SCO.name  : InstructionProcessor(Opcodes.SCO.value , Rd = OperandProcessorDefs.REG_GP, Rs = OperandProcessorDefs.REG_GP, Rt = OperandProcessorDefs.REG_GP, alu_op=OperandProcessorDefs.ALU_OPC_XX),
+    Opcodes.BEQZ.name : InstructionProcessor(Opcodes.BEQZ.value, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.DISP8_SIGNED),
+    Opcodes.BLTZ.name : InstructionProcessor(Opcodes.BLTZ.value, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.DISP8_SIGNED),
+    Opcodes.BGEZ.name : InstructionProcessor(Opcodes.BGEZ.value, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.DISP8_SIGNED),
+    Opcodes.LBI.name  : InstructionProcessor(Opcodes.LBI.value , Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.DISP8_SIGNED),
     Opcodes.SLBI.name : InstructionProcessor(Opcodes.SLBI.value, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM8_UNSIGNED),
-    Opcodes.J.name    : InstructionProcessor(Opcodes.J.value   , immediate = OperandProcessorDefs.IMM11_SIGNED),
-    Opcodes.JR.name   : InstructionProcessor(Opcodes.JR.value  , Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM8_SIGNED),
-    Opcodes.JALR.name : InstructionProcessor(Opcodes.JALR.value, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM8_SIGNED),
+    Opcodes.J.name    : InstructionProcessor(Opcodes.J.value   , immediate = OperandProcessorDefs.DISP11_SIGNED),
+    Opcodes.JR.name   : InstructionProcessor(Opcodes.JR.value  , Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.DISP8_SIGNED),
+    Opcodes.JALR.name : InstructionProcessor(Opcodes.JALR.value, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.DISP8_SIGNED),
 }
 
 class Directives(Enum):
@@ -143,7 +151,7 @@ class CustomPreprocessor(Preprocessor):
             StripCommentsTask(PREFIX_LINE_COMMENT, BlockCommentPrefix(PREFIX_BLK_COMMENT_S, PREFIX_BLK_COMMENT_E)),
             StripWhitespaceTask(),
             DirectiveTask(PREFIX_DIRECTIVE, DIRECTIVE_TABLE),
-            AddressingTask(SUFFIX_LABEL),
+            LabelTask(SUFFIX_LABEL),
         ]
         super().__init__(PREPROCESSOR_TASKS)
 

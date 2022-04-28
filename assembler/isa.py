@@ -5,7 +5,7 @@ from bitstring import BitArray, Bits, BitStream, BitString, CreationError
 
 from assembler.exceptions import AssemblerWarning, AssemblerError
 from assembler.state import AssemblerPassState
-from assembler.utils import resize_bits
+from assembler.utils import print_info, resize_bits
 
 class Opcode(NamedTuple):
     name: str
@@ -29,12 +29,15 @@ class OperandProcessor(object):
         self.length = length
 
     @abstractmethod
-    def process_str(self, opd_str: str) -> AssembledBitString:
+    def process_str(self, opd_str: str, aps: AssemblerPassState) -> AssembledBitString:
         pass
 
     @abstractmethod
-    def process_symbol(self, opd_bits: Bits) -> AssembledBitString:
+    def process_bits(self, opd_bits: Bits, aps: AssemblerPassState) -> AssembledBitString:
         pass
+
+    def process_symbol(self, sym_bits: Bits, aps: AssemblerPassState) -> AssembledBitString:
+        raise AssemblerError('Unexpected symbol provided for operand. Operand does not support symbols.')
 
 class ImplicitOperandProcessor(OperandProcessor):
 
@@ -50,12 +53,12 @@ class ImplicitOperandProcessor(OperandProcessor):
     def DONT_CARES(cls, length: int):
         return cls.ZEROS(length)
 
-    def process_str(self, opd_str: str) -> AssembledBitString:
+    def process_str(self, opd_str: str, aps: AssemblerPassState) -> AssembledBitString:
         if opd_str:
             raise AssemblerError('Unexpected operand.')
         return (self.__value, None)
 
-    def process_symbol(self, opd_bits: Bits) -> AssembledBitString:
+    def process_bits(self, opd_bits: Bits, aps: AssemblerPassState) -> AssembledBitString:
         if opd_bits:
             raise AssemblerError('Unexpected operand.')
         return (self.__value, None)
@@ -66,7 +69,7 @@ class RegisterOperandProcessor(OperandProcessor):
         super().__init__(length)
         self.registers = registers
 
-    def process_str(self, opd_str: str) -> AssembledBitString:
+    def process_str(self, opd_str: str, aps: AssemblerPassState) -> AssembledBitString:
         opd_str = opd_str.strip()
         if opd_str[0] != '$': raise AssemblerError('Unknown format specifier \'{}\' for operand of type \'register\'. Expected \'{}\'.'.format(opd_str[0], '$'), at_token=opd_str)
 
@@ -79,7 +82,7 @@ class RegisterOperandProcessor(OperandProcessor):
         except KeyError:
             raise AssemblerError('Unknown CPU register \'{}\'.'.format(reg_name), at_token=opd_str)
 
-    def process_symbol(self, opd_bits: Bits) -> AssembledBitString:
+    def process_bits(self, opd_bits: Bits, aps: AssemblerPassState) -> AssembledBitString:
         try:
             opd_bits = resize_bits(opd_bits, self.length, is_signed=False)
             if not opd_bits in self.registers.values():
@@ -96,7 +99,7 @@ class ImmediateOperandProcessor(OperandProcessor):
         super().__init__(length)
         self.is_signed = is_signed
 
-    def process_str(self, opd_str: str) -> AssembledBitString:
+    def process_str(self, opd_str: str, aps: AssemblerPassState) -> AssembledBitString:
         opd_str = opd_str.strip()
         if opd_str[0] != '#': raise AssemblerError('Unknown format specifier \'{}\' for operand of type \'immediate\'. Expected \'{}\'.'.format(opd_str[0], '#'), at_token=opd_str)
 
@@ -109,7 +112,7 @@ class ImmediateOperandProcessor(OperandProcessor):
             imm_bits = Bits(auto=imm_str)
             imm_bits.int
             try:
-               return self.process_symbol(imm_bits)
+               return self.process_bits(imm_bits, aps)
             except AssemblerError as e:
                 e.at_token = opd_str
                 raise e
@@ -117,18 +120,26 @@ class ImmediateOperandProcessor(OperandProcessor):
             try:
                 imm_bits = Bits(int=int(imm_str), length=64) if self.is_signed else Bits(uint=int(imm_str), length=64)
                 try:
-                    return self.process_symbol(imm_bits)
+                    return self.process_bits(imm_bits, aps)
                 except AssemblerError as e:
                     e.at_token = opd_str
                     raise e
             except CreationError:
                 raise AssemblerError('Literal \'{}\' is not a valid immediate of type \'{}-bit {} integer\'.'.format(imm_str, self.length, 'signed' if self.is_signed else 'unsigned'), at_token=opd_str)
 
-    def process_symbol(self, opd_bits: Bits) -> AssembledBitString:
+    def process_bits(self, opd_bits: Bits, aps: AssemblerPassState) -> AssembledBitString:
         try:
             return AssembledBitString(resize_bits(opd_bits, self.length, self.is_signed), warnings=None)
         except ValueError as e:
             raise AssemblerError(e)
+
+
+class DisplacementOperandProcessor(ImmediateOperandProcessor):
+
+    def process_symbol(self, sym_bits: Bits, aps: AssemblerPassState):
+        displacement: int = sym_bits.uint - aps.pc_addr - 2 # PC (target/symbol) = PC (current pc/aps.pc_addr) + 2 + Displacement
+        print_info(aps, 'Computed displacement = {} for pc = {} and symbol = {}'.format(displacement, aps.pc_addr, sym_bits.uint))
+        return self.process_bits(Bits(int=displacement, length=64), aps)
 
 
 class InstructionProcessor(object):
@@ -138,6 +149,9 @@ class InstructionProcessor(object):
     def __init__(self, opcode: Opcode, **kwargs: OperandProcessor):
         self.__opcode = opcode
         self.__operandProcessors = kwargs
+        self.length = opcode.bitstring.length
+        for opd_proc in self.__operandProcessors.values():
+            self.length += opd_proc.length
 
     def process_str(self, opds_str: str, aps: AssemblerPassState) -> AssembledBitString:
         bitstring = BitString(self.__opcode.bitstring)
@@ -165,9 +179,9 @@ class InstructionProcessor(object):
                 opd_bitstring = None
                 opd_warnings = None
                 try:
-                    opd_bitstring, opd_warnings = opd_proc.process_symbol(aps.get_symbol(opd_str))
+                    opd_bitstring, opd_warnings = opd_proc.process_symbol(aps.get_symbol(opd_str), aps)
                 except KeyError:
-                    opd_bitstring, opd_warnings = opd_proc.process_str(opd_str)
+                    opd_bitstring, opd_warnings = opd_proc.process_str(opd_str, aps)
                 except AssemblerError as e:
                     if not e.at_token: e.at_token = opd_str
                     raise e

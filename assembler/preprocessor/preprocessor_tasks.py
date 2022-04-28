@@ -9,7 +9,7 @@ from bitstring import Bits
 
 # Labels
 
-class AddressingTask(PreprocessorTask):
+class LabelTask(PreprocessorTask):
 
     def __init__(self, labelSuffix: str):
         self.__labelSuffix = labelSuffix
@@ -19,7 +19,7 @@ class AddressingTask(PreprocessorTask):
         if self.__labelSuffix and line.endswith(self.__labelSuffix):
             label_name = line[:-1].strip()
             label_addr = Bits(uint=aps.pc_addr, length=64)
-            #print('FOUND LABEL \'{}\' at address {}'.format(label_name, aps.pc_addr))
+            print('Resolved symbol \'{}\' on line {} with address {}'.format(label_name, aps.lineno, aps.pc_addr))
             aps.add_symbol(label_name, label_addr)
             return None
         return line

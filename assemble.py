@@ -7,6 +7,8 @@ from assembler.exceptions import AssemblerError, AssemblerException
 
 from bitstring import Bits
 
+from assembler.utils import print_exception
+
 # FIBS-J2
 # MMAABC
 # MACBAM
@@ -20,7 +22,7 @@ if __name__ == '__main__':
     try:
         executable_data: Bits = assembler.assemble_file(args.input)
     except AssemblerError as e:
-        print(e.tostring())
+        print_exception(e)
         exit(-1)
 
     output_filepath = args.output if args.output else Path(args.input).stem + '.o'

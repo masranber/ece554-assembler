@@ -49,7 +49,8 @@ class Assembler(object):
             aps.lineno += 1
             if b is not None:
                 text_segment.append(b)
-                print('{} -> {} (0x{})'.format(instr, b.bin, b.hex))
+                aps.pc_addr += 2
+                print_info(aps, '\'{:20s}\' -> {} (0x{})'.format(instr, b.bin, b.hex))
 
         #text_segment.byteswap(2) # change endianness of the machine code
         return text_segment

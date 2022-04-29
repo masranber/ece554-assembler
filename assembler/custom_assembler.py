@@ -2,7 +2,7 @@ from enum import Enum, auto
 from bitstring import Bits
 
 from assembler.isa import *
-from assembler.directives import DirectiveTable, SegmentDirectiveProcessor
+from assembler.directives import *
 from assembler.preprocessor import *
 from assembler.synthesis import Synthesizer
 from assembler.assembler import Assembler
@@ -95,6 +95,7 @@ class OperandProcessorDefs:
     IMM5_UNSIGNED  = ImmediateOperandProcessor(INSTR_OPD_LEN_IMM5    , is_signed=False)            # 5-bit unsigned immediate
     IMM5_SIGNED    = ImmediateOperandProcessor(INSTR_OPD_LEN_IMM5    , is_signed=True )            # 5-bit signed immediate
     IMM8_UNSIGNED  = ImmediateOperandProcessor(INSTR_OPD_LEN_IMM8    , is_signed=False)            # 8-bit unsigned immediate
+    IMM8_SIGNED   =  ImmediateOperandProcessor(INSTR_OPD_LEN_IMM8    , is_signed=True )            # 8-bit signed immediate
     DISP8_SIGNED   = DisplacementOperandProcessor(INSTR_OPD_LEN_IMM8 , is_signed=True )            # 8-bit signed displacement
     IMM11_UNSIGNED = ImmediateOperandProcessor(INSTR_OPD_LEN_IMM11   , is_signed=False)            # 11-bit unsigned immediate
     DISP11_SIGNED  = DisplacementOperandProcessor(INSTR_OPD_LEN_IMM11, is_signed=True )            # 11-bit signed displacement
@@ -123,7 +124,7 @@ INSTRUCTION_SET: InstructionSet = {
     Opcodes.BEQZ.name : InstructionProcessor(Opcodes.BEQZ.value, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.DISP8_SIGNED),
     Opcodes.BLTZ.name : InstructionProcessor(Opcodes.BLTZ.value, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.DISP8_SIGNED),
     Opcodes.BGEZ.name : InstructionProcessor(Opcodes.BGEZ.value, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.DISP8_SIGNED),
-    Opcodes.LBI.name  : InstructionProcessor(Opcodes.LBI.value , Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.DISP8_SIGNED),
+    Opcodes.LBI.name  : InstructionProcessor(Opcodes.LBI.value , Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM8_SIGNED),
     Opcodes.SLBI.name : InstructionProcessor(Opcodes.SLBI.value, Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.IMM8_UNSIGNED),
     Opcodes.J.name    : InstructionProcessor(Opcodes.J.value   , immediate = OperandProcessorDefs.DISP11_SIGNED),
     Opcodes.JR.name   : InstructionProcessor(Opcodes.JR.value  , Rs = OperandProcessorDefs.REG_GP, immediate = OperandProcessorDefs.DISP8_SIGNED),
@@ -132,14 +133,12 @@ INSTRUCTION_SET: InstructionSet = {
 
 class Directives(Enum):
     SEGMENT = auto()
-    VALUE = auto()
-    STRING = auto()
+    DEFINE = auto()
     ENTRY = auto()
 
 DIRECTIVE_TABLE: DirectiveTable = {
     Directives.SEGMENT.name: SegmentDirectiveProcessor(Directives.SEGMENT.name),
-    Directives.VALUE.name: None,
-    Directives.STRING.name: None,
+    Directives.DEFINE.name: DefineDirectiveProcessor(Directives.DEFINE.name),
     Directives.ENTRY.name: None,
 }
 

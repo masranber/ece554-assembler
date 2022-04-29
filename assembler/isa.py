@@ -133,6 +133,9 @@ class ImmediateOperandProcessor(OperandProcessor):
         except ValueError as e:
             raise AssemblerError(e)
 
+    def process_symbol(self, sym_bits: Bits, aps: AssemblerPassState) -> AssembledBitString:
+        return self.process_bits(sym_bits, aps)
+
 
 class DisplacementOperandProcessor(ImmediateOperandProcessor):
 

@@ -16,6 +16,7 @@ class AssemblerPassState(object):
 
     def add_symbol(self, name: str, value: Bits):
         self.__sym_table[name] = value
+        print('{}:{}: INFO: Resolved symbol \'{}\' at address {} with value 0x{}'.format(self.filename, self.lineno, name, self.pc_addr, value.hex))
 
     def get_symbol(self, name:str) -> Bits:
         return self.__sym_table[name]

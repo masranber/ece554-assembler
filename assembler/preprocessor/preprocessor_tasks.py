@@ -19,7 +19,6 @@ class LabelTask(PreprocessorTask):
         if self.__labelSuffix and line.endswith(self.__labelSuffix):
             label_name = line[:-1].strip()
             label_addr = Bits(uint=aps.pc_addr, length=64)
-            print('Resolved symbol \'{}\' on line {} with address {}'.format(label_name, aps.lineno, aps.pc_addr))
             aps.add_symbol(label_name, label_addr)
             return None
         return line
@@ -99,7 +98,7 @@ class DirectiveTask(PreprocessorTask):
                 try:
                     dir_name, dir_val = line[1:].split(' ', maxsplit=1)
                     dir_processor: DirectiveProcessor = self.__directiveTable[dir_name.upper()]
-                    if dir_processor: dir_processor.process(dir_val, aps)
+                    if dir_processor: dir_processor.process(dir_val.strip(), aps)
                     return None
                 except ValueError:
                     raise AssemblerError('Invalid assembler directive format \'{}\''.format(line), aps.filename, aps.lineno, line, line)

@@ -110,3 +110,11 @@ class DirectiveTask(PreprocessorTask):
                     if not e.at_token: e.at_token = line
                     raise e
         return line
+
+
+class SubstituteTokensTask(PreprocessorTask):
+
+    def process_line(self, line: str, aps: AssemblerPassState) -> str:
+        for name, value in aps.get_defines():
+            line = line.replace(name, value)
+        return line

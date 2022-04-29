@@ -138,7 +138,16 @@ class Directives(Enum):
 
 DIRECTIVE_TABLE: DirectiveTable = {
     Directives.SEGMENT.name: SegmentDirectiveProcessor(Directives.SEGMENT.name),
-    Directives.DEFINE.name: DefineDirectiveProcessor(Directives.DEFINE.name),
+    Directives.DEFINE.name: DefineDirectiveProcessor(Directives.DEFINE.name, illegal_tokens = {
+        PREFIX_BLK_COMMENT_E, 
+        PREFIX_BLK_COMMENT_S, 
+        PREFIX_DIRECTIVE, 
+        PREFIX_IMMEDIATE, 
+        PREFIX_LINE_COMMENT, 
+        PREFIX_REGISTER, 
+        SUFFIX_LABEL, 
+        INSTR_OPD_DELIM
+    }),
     Directives.ENTRY.name: None,
 }
 
@@ -151,6 +160,7 @@ class CustomPreprocessor(Preprocessor):
             StripWhitespaceTask(),
             DirectiveTask(PREFIX_DIRECTIVE, DIRECTIVE_TABLE),
             LabelTask(SUFFIX_LABEL),
+            SubstituteTokensTask(),
         ]
         super().__init__(PREPROCESSOR_TASKS)
 

@@ -23,22 +23,22 @@ https://www.python.org/downloads/
 ## Usage
 
 ### Basic
-`python3 assembler.py <source filepath>`
+`python3 assemble.py <source filepath>`
 
 Will generate an object file (.o) with the same as the source file in the current directory.
 
 #### Example
-`python3 assembler.py program.asm` will produce `program.o` upon successful compilation
+`python3 assemble.py program.asm` will produce `program.o` upon successful compilation
 
 ### Advanced
 Specify a custom output path for the object file:
 
-`python3 assembler.py <source filepath> -o <output path>`
+`python3 assemble.py <source filepath> -o <output path>`
 
 The output path directory structure must exist. The path may be relative or absolute.
 
 #### Example
-`python3 assembler.py program.asm -o build/program.o` will produce `program.o` in the directory `build`
+`python3 assemble.py program.asm -o build/program.o` will produce `program.o` in the directory `build`
 
 ## Assembly Language Syntax
 
@@ -100,3 +100,11 @@ Specifies the address in memory where the program will be loaded. Required to re
 `DATA`: Memory segment where all initialized global variables should be placed.
 
 A segment includes everything from immediately after the segment directive to immediately before the next valid segment directive. Instructions and global variables defined in the wrong section will produce an assembler error at compile time.
+
+#### Define
+
+`.define <name> <substitution>` ex: `.define MY_CONSTANT #0xFF` then `lbi $0, MY_CONSTANT` -> `lbi $0, #0xFF`
+
+Define directives are used exactly as they are in the C/C++ preprocessor. However, unlike C/C++ they don't support macros (that is evaluating arguments during substitution). The preprocessor makes static substitutions only.
+
+Names may NOT include any reserved tokens such as, but not limited to, '$' (reserved for registers) and ':' (reserved for labels).

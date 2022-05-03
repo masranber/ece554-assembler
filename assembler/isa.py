@@ -118,7 +118,7 @@ class ImmediateOperandProcessor(OperandProcessor):
                 raise e
         except ValueError:
             try:
-                imm_bits = Bits(int=int(imm_str), length=64) if self.is_signed else Bits(uint=int(imm_str), length=64)
+                imm_bits = Bits(int=int(imm_str), length=self.length) if self.is_signed else Bits(uint=int(imm_str), length=self.length)
                 try:
                     return self.process_bits(imm_bits, aps)
                 except AssemblerError as e:
@@ -131,6 +131,7 @@ class ImmediateOperandProcessor(OperandProcessor):
         try:
             return AssembledBitString(resize_bits(opd_bits, self.length, self.is_signed), warnings=None)
         except ValueError as e:
+            print('imm process bits exc: ', str(opd_bits))
             raise AssemblerError(e)
 
 

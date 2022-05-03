@@ -17,7 +17,7 @@ class Synthesizer(object):
             opc_str, *opds_str = instr_str.split(' ', maxsplit=1)
             instr_proc: InstructionProcessor = self.__instr_set[opc_str.upper()]
             return instr_proc.process_str(opds_str[0] if opds_str else '', aps)
-        except KeyError:
+        except KeyError as ke:
             raise AssemblerError('Failed to resolve instruction \'{}\'. Bad opcode or bad instruction format'.format(opc_str), aps.filename, aps.lineno, line, at_token=opc_str)
         except ValueError:
             raise AssemblerError('Unknown instruction format \'{}\'. Expected opcode, operands.'.format(instr_str), aps.filename, aps.lineno, line, at_token=instr_str)

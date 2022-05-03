@@ -2,6 +2,8 @@ from abc import abstractmethod
 from bitstring import Bits
 from typing import Dict, Any, List
 
+from prometheus_client import Enum
+
 from assembler.preprocessor import PreprocessorTask
 
 from assembler.isa import *
@@ -18,10 +20,10 @@ class Assembler(object):
         self.__preprocessor = preprocessor
         self.__synthesizer = synthesizer
 
-    def assemble(self, source_str: str, filename: str = None) -> Bits:
+    def assemble(self, source_str: str, filename: str = None) -> List[Bits]:
         return self.assemble_lines(source_str.splitlines(), filename)
 
-    def assemble_lines(self, source_lines: List[str], filename: str = None) -> Bits:
+    def assemble_lines(self, source_lines: List[str], filename: str = None) -> List[Bits]:
         if not self.__preprocessor or not self.__synthesizer:
             raise ValueError('Assembler must have a preprocessor and synthesizer! One or both were not set in the constructor.')
 
@@ -43,13 +45,13 @@ class Assembler(object):
         aps.pc_addr = 0
 
         # Assembler Pass 2: Synthesize the processed source code lines into machine code
-        text_segment = BitString()
+        text_segment = []
         for i, instr in enumerate(processed_lines):
             b, _ = self.__synthesizer.process_instruction(instr, source_lines[i], aps)
             aps.lineno += 1
             if b is not None:
                 text_segment.append(b)
-                aps.pc_addr += 2
+                aps.pc_addr += 1
                 print_info(aps, '\'{:20s}\' -> {} (0x{})'.format(instr, b.bin, b.hex))
 
         #text_segment.byteswap(2) # change endianness of the machine code
@@ -57,7 +59,7 @@ class Assembler(object):
         
 
 
-    def assemble_file(self, filepath: str) -> Bits:
+    def assemble_file(self, filepath: str) -> List[Bits]:
         with open(filepath, 'r') as src_file:
             return self.assemble_lines(src_file.readlines(), src_file.name)
 

@@ -21,5 +21,5 @@ class Preprocessor(object):
                 break
             current_line = task.process_line(current_line, aps)
         if current_line and not ateLine:
-            aps.pc_addr += 2 # Uneaten lines are instructions, increment the PC for each instruction
+            aps.pc_addr += 1 # Uneaten lines are instructions, increment the PC for each instruction
         return current_line

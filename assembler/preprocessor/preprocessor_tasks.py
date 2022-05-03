@@ -103,7 +103,6 @@ class DirectiveTask(PreprocessorTask):
                 except ValueError:
                     raise AssemblerError('Invalid assembler directive format \'{}\''.format(line), aps.filename, aps.lineno, line, line)
                 except KeyError:
-                    print(self.__directiveTable.keys())
                     raise AssemblerError('Invalid assembler directive name \'{}\''.format(dir_name), aps.filename, aps.lineno, line, dir_name)
                 except AssemblerError as e:
                     if not e.line: e.line = line

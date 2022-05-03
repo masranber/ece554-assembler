@@ -146,12 +146,18 @@ class InstructionProcessor(object):
 
     OPERAND_DELIM = ','
     
-    def __init__(self, opcode: Opcode, **kwargs: OperandProcessor):
+    def __init__(self, opcode: Opcode, format: List[str] = None, **kwargs: OperandProcessor):
         self.__opcode = opcode
+        self.__format = {}
         self.__operandProcessors = kwargs
         self.length = opcode.bitstring.length
+    
         for opd_proc in self.__operandProcessors.values():
             self.length += opd_proc.length
+
+        self.__format = format if format else self.__operandProcessors.keys()
+        if len(self.__format) != len(self.__operandProcessors):
+            raise ValueError('Number of operands ({}) in instruction format doesn\'t match number of operand processors ({})'.format(len(self.__format),len(self.__operandProcessors)))
 
     def process_str(self, opds_str: str, aps: AssemblerPassState) -> AssembledBitString:
         bitstring = BitString(self.__opcode.bitstring)
@@ -171,7 +177,9 @@ class InstructionProcessor(object):
         i: int = 0
         opd_name: str
         opd_proc: OperandProcessor
-        for i, (opd_name, opd_proc) in enumerate(self.__operandProcessors.items()):
+        opd_bitstrings = {}
+        for i, opd_name in enumerate(self.__format):
+            opd_proc = self.__operandProcessors[opd_name]
             if type(opd_proc) == ImplicitOperandProcessor:
                 opd_strs.insert(i, '') # create implicit (empty) operand string
             try:
@@ -185,12 +193,15 @@ class InstructionProcessor(object):
                 except AssemblerError as e:
                     if not e.at_token: e.at_token = opd_str
                     raise e
-                
-                bitstring.append(opd_bitstring)
+                opd_bitstrings[opd_name] = opd_bitstring
+                #bitstring.append(opd_bitstring)
                 warnings.append(opd_warnings)
                 
             except IndexError:
                 raise AssemblerError('Expected operand \'{}\' at position {} for instruction of type \'{}\'. Expected {} operands, only {} were provided.'.format(opd_name, i, self.__opcode.name, len(self.__operandProcessors), len(opd_strs)), at_token=opds_str)
+
+        for opd_name in self.__operandProcessors.keys():
+            bitstring.append(opd_bitstrings[opd_name])
 
         return (bitstring, warnings)
 

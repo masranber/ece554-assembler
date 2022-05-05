@@ -3,6 +3,11 @@ from assembler.state import AssemblerPassState
 
 from assembler.exceptions import AssemblerWarning, AssemblerError
 
+'''
+The synthesizer represents the 2nd pass of a two pass assembler. The synthesizer's job
+is to translate assembly instructions to CPU machine code. At a higher level, this means
+translate instruction strings to bit strings.
+'''
 class Synthesizer(object):
     
     def __init__(self, instr_set: InstructionSet):

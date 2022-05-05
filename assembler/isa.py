@@ -138,7 +138,7 @@ class ImmediateOperandProcessor(OperandProcessor):
 class DisplacementOperandProcessor(ImmediateOperandProcessor):
 
     def process_symbol(self, sym_bits: Bits, aps: AssemblerPassState):
-        displacement: int = sym_bits.uint - aps.pc_addr - 2 # PC (target/symbol) = PC (current pc/aps.pc_addr) + 2 + Displacement
+        displacement: int = sym_bits.uint - aps.pc_addr - 1 # PC (target/symbol) = PC (current pc/aps.pc_addr) + 1 + Displacement
         #print_info(aps, 'Computed displacement = {} for pc = {} and symbol = {}'.format(displacement, aps.pc_addr, sym_bits.uint))
         return self.process_bits(Bits(int=displacement, length=64), aps)
 

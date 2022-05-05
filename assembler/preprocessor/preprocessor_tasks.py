@@ -7,29 +7,43 @@ from assembler.exceptions import AssemblerError
 from bitstring import Bits
 
 
-# Labels
-
+'''
+Preprocessor task to process labels in the source code.
+'''
 class LabelTask(PreprocessorTask):
 
+    '''
+    labelSuffix: the suffix token used to identify labels
+    '''
     def __init__(self, labelSuffix: str):
         self.__labelSuffix = labelSuffix
 
+    '''
+    Checks a line to see if it contains a label. If it contains a label
+    the line is stripped to avoid future preprocessor tasks from processing it.
+    The label and current instruction address are added to the assembler's symbol table.
+    '''
     def process_line(self, line: str, aps: AssemblerPassState) -> str:
         if not line: return None
         if self.__labelSuffix and line.endswith(self.__labelSuffix):
-            label_name = line[:-1].strip()
+            label_name = line[:-len(self.__labelSuffix)].strip() # exclude label suffix from the name
             label_addr = Bits(uint=aps.pc_addr, length=64)
             aps.add_symbol(label_name, label_addr)
-            return None
+            return None # strip entire line from source code
         return line
 
 
-# Comment Stripping
-
+'''
+Represents the beginning and terminating tokens of a block comment.
+'''
 class BlockCommentPrefix(NamedTuple):
     begin: str
     terminate: str
 
+
+'''
+Preprocessor task that strips comments from source code lines.
+'''
 class StripCommentsTask(PreprocessorTask):
 
     def __init__(self, lineCommentPrefix: str, blockCommentPrefix: BlockCommentPrefix):
@@ -74,8 +88,9 @@ class StripCommentsTask(PreprocessorTask):
         return self.strip_line_comments(no_block_comments)
 
 
-# Whitespace Stripping
-
+'''
+Preprocessor task that strips leading and trailing whitespace from source code lines.
+'''
 class StripWhitespaceTask(PreprocessorTask):
 
     def process_line(self, line: str, aps: AssemblerPassState) -> str:
@@ -83,8 +98,9 @@ class StripWhitespaceTask(PreprocessorTask):
         return line.strip()
 
 
-# Directives
-
+'''
+Preprocessor task that resolves assembler directives in the source code.
+'''
 class DirectiveTask(PreprocessorTask):
 
     def __init__(self, directivePrefix: str, directiveTable: DirectiveTable):
@@ -97,7 +113,7 @@ class DirectiveTask(PreprocessorTask):
                 dir_name = None
                 try:
                     dir_name, dir_val = line[1:].split(' ', maxsplit=1)
-                    dir_processor: DirectiveProcessor = self.__directiveTable[dir_name.upper()]
+                    dir_processor: DirectiveProcessor = self.__directiveTable[dir_name.upper()] # uppercase makes the names case insensitive
                     if dir_processor: dir_processor.process(dir_val.strip(), aps)
                     return None
                 except ValueError:
@@ -111,6 +127,10 @@ class DirectiveTask(PreprocessorTask):
         return line
 
 
+'''
+Preprocessor task that substitutes values in the assembler definition table.
+These definition values come from define directives.
+'''
 class SubstituteTokensTask(PreprocessorTask):
 
     def process_line(self, line: str, aps: AssemblerPassState) -> str:

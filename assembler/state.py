@@ -30,4 +30,7 @@ class AssemblerPassState(object):
 
     def get_defines(self):
         return self.__def_table.items()
+    
+    def get_define_table(self):
+        return self.__def_table
 

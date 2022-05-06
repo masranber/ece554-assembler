@@ -124,8 +124,8 @@ class ImmediateOperandProcessor(OperandProcessor):
                 except AssemblerError as e:
                     e.at_token = opd_str
                     raise e
-            except CreationError:
-                raise AssemblerError('Literal \'{}\' is not a valid immediate of type \'{}-bit {} integer\'.'.format(imm_str, self.length, 'signed' if self.is_signed else 'unsigned'), at_token=opd_str)
+            except CreationError as e:
+                raise AssemblerError(str(e), at_token=opd_str)
 
     def process_bits(self, opd_bits: Bits, aps: AssemblerPassState) -> AssembledBitString:
         try:

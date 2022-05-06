@@ -1,4 +1,5 @@
-from typing import NamedTuple
+import re
+from typing import Any, Dict, NamedTuple
 
 from .preprocessor_task import *
 from assembler.directives.directive_processor import DirectiveProcessor, DirectiveTable
@@ -133,7 +134,12 @@ These definition values come from define directives.
 '''
 class SubstituteTokensTask(PreprocessorTask):
 
+    replacements = None
+
+    def replace_token(match):
+        return SubstituteTokensTask.replacements[match.group(0)]
+
     def process_line(self, line: str, aps: AssemblerPassState) -> str:
-        for name, value in aps.get_defines():
-            line = line.replace(name, value)
+        SubstituteTokensTask.replacements = aps.get_define_table()
+        line = re.sub('|'.join(r'\b%s\b' % re.escape(s) for s in SubstituteTokensTask.replacements), SubstituteTokensTask.replace_token, line) 
         return line

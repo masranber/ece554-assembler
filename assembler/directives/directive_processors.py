@@ -50,7 +50,7 @@ class DefineDirectiveProcessor(DirectiveProcessor):
             def_val = def_val.strip()
             
             if any(token in def_name for token in self.__illegal_tokens):
-                raise AssemblerError('Encountered illegal token \'{}\' in define name.', aps.filename, aps.lineno, at_token=def_name)
+                raise AssemblerError('Encountered illegal token \'{}\' in define name.'.format('$'), aps.filename, aps.lineno, at_token=def_name)
 
             aps.add_define(def_name.strip(), def_val) # add to the definition table
             
